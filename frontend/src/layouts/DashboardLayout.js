@@ -197,34 +197,47 @@ const DashboardLayout = () => {
           minHeight: "64px !important",
           display: "flex",
           alignItems: "center",
-          justifyContent:
-            !isMobile && !sidebarOpen ? "center" : "space-between",
-          px: 1.5,
+          justifyContent: sidebarOpen || isMobile ? "flex-start" : "center",
+          px: sidebarOpen || isMobile ? 2 : 1,
         }}>
-        {/* Logo / Title */}
-        {(isMobile || sidebarOpen) && (
-          <Typography
-            variant='h6'
-            fontWeight='700'
-            noWrap
+        <Box
+          onClick={isMobile ? handleDrawerToggle : handleSidebarToggle}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            userSelect: "none",
+          }}>
+          <Box
             sx={{
-              color: "text.primary",
+              width: 36,
+              height: 36,
+              borderRadius: 1.5,
+              backgroundColor: "primary.main",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontWeight: 700,
+              fontSize: "18px",
+              flexShrink: 0,
             }}>
-            Shop Manager
-          </Typography>
-        )}
+            S
+          </Box>
 
-        {/* Desktop Collapse Button */}
-        {/* {!isMobile && (
-          <IconButton
-            onClick={handleSidebarToggle}
-            size='small'
-            sx={{
-              ml: sidebarOpen ? 1 : 0,
-            }}>
-            {sidebarOpen ? <ChevronLeft /> : <MenuIcon />}
-          </IconButton>
-        )} */}
+          {(sidebarOpen || isMobile) && (
+            <Typography
+              variant='h6'
+              fontWeight={700}
+              noWrap
+              sx={{
+                ml: 1.2,
+                color: "text.primary",
+              }}>
+              Shop Manager
+            </Typography>
+          )}
+        </Box>
       </Toolbar>
 
       <Divider />
@@ -386,7 +399,7 @@ const DashboardLayout = () => {
           {/* SIDEBAR TOGGLE */}
           {/* ============================================================ */}
 
-          <IconButton
+          {/* <IconButton
             color='inherit'
             aria-label='toggle drawer'
             edge='start'
@@ -401,7 +414,7 @@ const DashboardLayout = () => {
             ) : (
               <MenuIcon />
             )}
-          </IconButton>
+          </IconButton> */}
 
           {/* Page Title */}
           <Typography
