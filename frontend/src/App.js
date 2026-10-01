@@ -1,9 +1,8 @@
-import { Navigate, Route, Routes } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 // Layouts
 import PublicLayout from "./layouts/PublicLayout";
-import DashboardLayout from "./layouts/DashboardLayout";
 
 // Route Protection
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -13,13 +12,14 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 // Protected Pages
+import ProtectedLayout from "./layouts/ProtectedLayout";
 import DashboardPage from "./pages/DashboardPage";
-import ShopsPage from "./pages/ShopsPage";
-import StockPage from "./pages/StockPage";
-import FinancePage from "./pages/FinancePage";
 import EmployeesPage from "./pages/EmployeesPage";
+import FinancePage from "./pages/FinancePage";
 import MeetingsPage from "./pages/MeetingsPage";
 import ReportsPage from "./pages/ReportsPage";
+import ShopsPage from "./pages/ShopsPage";
+import StockPage from "./pages/StockPage";
 
 const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -55,7 +55,7 @@ const App = () => {
       {/* ================= PROTECTED ROUTES ================= */}
 
       <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
+        <Route element={<ProtectedLayout />}>
           <Route path='/dashboard' element={<DashboardPage />} />
           <Route path='/dashboard/shops' element={<ShopsPage />} />
           <Route path='/dashboard/stock' element={<StockPage />} />
