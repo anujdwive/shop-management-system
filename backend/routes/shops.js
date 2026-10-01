@@ -1,62 +1,120 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Shop = require('../models/Shop');
-const { protect, owner, ownerOrManager } = require('../middleware/auth');
+const Shop = require("../models/Shop");
+const { protect, owner, ownerOrManager } = require("../middleware/auth");
 
 // @route   GET /api/shops
 // @desc    Get all shops (filtered by user role)
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get("/", protect, async (req, res) => {
   try {
-    let shops;
+    const { search = "" } = req.query;
 
-    // Owner can see all shops
-    if (req.user.role === 'owner') {
-      shops = await Shop.find().populate('owner', 'name email').populate('managers', 'name email');
-    }
-    // Manager/Worker can only see their assigned shops
-    else {
-      shops = await Shop.find({
-        _id: { $in: req.user.shops }
-      }).populate('owner', 'name email').populate('managers', 'name email');
+    // Pagination
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+
+    const skip = (page - 1) * limit;
+
+    // Search
+    const filter = {};
+    const searchText = search.trim();
+
+    if (searchText) {
+      filter.$or = [
+        {
+          name: {
+            $regex: searchText,
+            $options: "i",
+          },
+        },
+        {
+          location: {
+            $regex: searchText,
+            $options: "i",
+          },
+        },
+        {
+          address: {
+            $regex: searchText,
+            $options: "i",
+          },
+        },
+      ];
     }
 
-    res.json(shops);
+    // Role based filter
+    if (req.user.role !== "owner") {
+      filter._id = { $in: req.user.shops };
+    }
+
+    // Get shops
+    const shops = await Shop.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .populate("owner", "name email")
+      .populate("managers", "name email");
+
+    // Total shops matching search + role filter
+    const totalShops = await Shop.countDocuments(filter);
+
+    // Total pages
+    const totalPages = Math.ceil(totalShops / limit);
+
+    res.status(200).json({
+      success: true,
+      data: shops,
+      pagination: {
+        page,
+        limit,
+        totalShops,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 });
 
 // @route   GET /api/shops/:id
 // @desc    Get single shop
 // @access  Private
-router.get('/:id', protect, async (req, res) => {
+router.get("/:id", protect, async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id)
-      .populate('owner', 'name email phone')
-      .populate('managers', 'name email phone');
+      .populate("owner", "name email phone")
+      .populate("managers", "name email phone");
 
     if (!shop) {
-      return res.status(404).json({ message: 'Shop not found' });
+      return res.status(404).json({ message: "Shop not found" });
     }
 
     // Check if user has access to this shop
-    if (req.user.role !== 'owner' && !req.user.shops.includes(shop._id)) {
-      return res.status(403).json({ message: 'Not authorized to access this shop' });
+    if (req.user.role !== "owner" && !req.user.shops.includes(shop._id)) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this shop" });
     }
 
     res.json(shop);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   POST /api/shops
 // @desc    Create new shop
 // @access  Private (Owner only)
-router.post('/', protect, owner, async (req, res) => {
+router.post("/", protect, owner, async (req, res) => {
   try {
     const { name, location, address, phone, businessType } = req.body;
 
@@ -66,36 +124,37 @@ router.post('/', protect, owner, async (req, res) => {
       address,
       phone,
       businessType,
-      owner: req.user._id
+      owner: req.user._id,
     });
 
     // Add shop to owner's shops array
-    await require('../models/User').findByIdAndUpdate(
-      req.user._id,
-      { $push: { shops: shop._id } }
-    );
+    await require("../models/User").findByIdAndUpdate(req.user._id, {
+      $push: { shops: shop._id },
+    });
 
     res.status(201).json(shop);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   PUT /api/shops/:id
 // @desc    Update shop
 // @access  Private (Owner or Manager)
-router.put('/:id', protect, ownerOrManager, async (req, res) => {
+router.put("/:id", protect, ownerOrManager, async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id);
 
     if (!shop) {
-      return res.status(404).json({ message: 'Shop not found' });
+      return res.status(404).json({ message: "Shop not found" });
     }
 
     // Check if user has access
-    if (req.user.role !== 'owner' && !req.user.shops.includes(shop._id)) {
-      return res.status(403).json({ message: 'Not authorized to update this shop' });
+    if (req.user.role !== "owner" && !req.user.shops.includes(shop._id)) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this shop" });
     }
 
     const { name, location, address, phone, businessType, status } = req.body;
@@ -112,33 +171,33 @@ router.put('/:id', protect, ownerOrManager, async (req, res) => {
     res.json(shop);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   DELETE /api/shops/:id
 // @desc    Delete shop
 // @access  Private (Owner only)
-router.delete('/:id', protect, owner, async (req, res) => {
+router.delete("/:id", protect, owner, async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id);
 
     if (!shop) {
-      return res.status(404).json({ message: 'Shop not found' });
+      return res.status(404).json({ message: "Shop not found" });
     }
 
     await shop.deleteOne();
 
     // Remove shop from all users' shops arrays
-    await require('../models/User').updateMany(
+    await require("../models/User").updateMany(
       { shops: shop._id },
-      { $pull: { shops: shop._id } }
+      { $pull: { shops: shop._id } },
     );
 
-    res.json({ message: 'Shop removed' });
+    res.json({ message: "Shop removed" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
