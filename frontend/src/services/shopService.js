@@ -1,9 +1,16 @@
-import api from './api';
+import api from "./api";
 
 export const shopService = {
-  getAll: () => api.get('/api/shops'),
+  getAll: ({ search, limit, page }) =>
+    api.get("/api/shops", {
+      params: {
+        search,
+        limit,
+        page,
+      },
+    }),
   getById: (id) => api.get(`/api/shops/${id}`),
-  create: (data) => api.post('/api/shops', data),
+  create: (data) => api.post("/api/shops", data),
   update: (id, data) => api.put(`/api/shops/${id}`, data),
   delete: (id) => api.delete(`/api/shops/${id}`),
 };
