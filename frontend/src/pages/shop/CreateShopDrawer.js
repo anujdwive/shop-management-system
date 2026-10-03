@@ -5,7 +5,7 @@ import DynamicDrawer from "../../UI/dynamicDrawer/DynamicDrawer";
 import { useCreateShop } from "../../hooks/useShops";
 import { addNotification } from "../../store/slices/uiSlice";
 
-const CreateShopDrawer = ({ onCancel, onCreate, open, handleClose }) => {
+const CreateShopDrawer = ({ open, handleClose }) => {
   // Form input management state
   const [formData, setFormData] = useState({
     name: "",
