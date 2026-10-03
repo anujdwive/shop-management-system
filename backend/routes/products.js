@@ -1,61 +1,81 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Product = require('../models/Product');
-const { protect, ownerOrManager } = require('../middleware/auth');
+const Product = require("../models/Product");
+const { protect, ownerOrManager } = require("../middleware/auth");
 
 // @route   GET /api/products
 // @desc    Get all products
 // @access  Private
-router.get('/', protect, async (req, res) => {
+router.get("/", protect, async (req, res) => {
   try {
-    const { category, status, search } = req.query;
+    const { category, status, search, page = 1, limit = 10 } = req.query;
+
+    const currentPage = Number(page);
+    const pageLimit = Number(limit);
+
+    const skip = (currentPage - 1) * pageLimit;
 
     let query = {};
 
     if (category) query.category = category;
+
     if (status) query.status = status;
+
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
-        { brand: { $regex: search, $options: 'i' } }
+        { name: { $regex: search, $options: "i" } },
+        { sku: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
       ];
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const [products, total] = await Promise.all([
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(pageLimit),
+
+      Product.countDocuments(query),
+    ]);
 
     res.json({
-      count: products.length,
-      products
+      products,
+      pagination: {
+        total,
+        page: currentPage,
+        limit: pageLimit,
+        totalPages: Math.ceil(total / pageLimit),
+      },
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 });
 
 // @route   GET /api/products/:id
 // @desc    Get single product
 // @access  Private
-router.get('/:id', protect, async (req, res) => {
+router.get("/:id", protect, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     res.json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   POST /api/products
 // @desc    Create new product
 // @access  Private (Owner or Manager)
-router.post('/', protect, ownerOrManager, async (req, res) => {
+router.post("/", protect, ownerOrManager, async (req, res) => {
   try {
     const {
       name,
@@ -67,14 +87,16 @@ router.post('/', protect, ownerOrManager, async (req, res) => {
       price,
       costPrice,
       unit,
-      status
+      status,
     } = req.body;
 
     // Check if SKU already exists
     if (sku) {
       const existingProduct = await Product.findOne({ sku });
       if (existingProduct) {
-        return res.status(400).json({ message: 'Product with this SKU already exists' });
+        return res
+          .status(400)
+          .json({ message: "Product with this SKU already exists" });
       }
     }
 
@@ -88,25 +110,25 @@ router.post('/', protect, ownerOrManager, async (req, res) => {
       price,
       costPrice,
       unit,
-      status
+      status,
     });
 
     res.status(201).json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   PUT /api/products/:id
 // @desc    Update product
 // @access  Private (Owner or Manager)
-router.put('/:id', protect, ownerOrManager, async (req, res) => {
+router.put("/:id", protect, ownerOrManager, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     const {
@@ -119,14 +141,16 @@ router.put('/:id', protect, ownerOrManager, async (req, res) => {
       price,
       costPrice,
       unit,
-      status
+      status,
     } = req.body;
 
     // Check if SKU already exists (and it's not this product)
     if (sku && sku !== product.sku) {
       const existingProduct = await Product.findOne({ sku });
       if (existingProduct) {
-        return res.status(400).json({ message: 'Product with this SKU already exists' });
+        return res
+          .status(400)
+          .json({ message: "Product with this SKU already exists" });
       }
     }
 
@@ -135,7 +159,8 @@ router.put('/:id', protect, ownerOrManager, async (req, res) => {
     product.brand = brand || product.brand;
     product.sku = sku || product.sku;
     product.description = description || product.description;
-    product.minStockLevel = minStockLevel !== undefined ? minStockLevel : product.minStockLevel;
+    product.minStockLevel =
+      minStockLevel !== undefined ? minStockLevel : product.minStockLevel;
     product.price = price !== undefined ? price : product.price;
     product.costPrice = costPrice !== undefined ? costPrice : product.costPrice;
     product.unit = unit || product.unit;
@@ -146,37 +171,38 @@ router.put('/:id', protect, ownerOrManager, async (req, res) => {
     res.json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // @route   DELETE /api/products/:id
 // @desc    Delete product
 // @access  Private (Owner or Manager)
-router.delete('/:id', protect, ownerOrManager, async (req, res) => {
+router.delete("/:id", protect, ownerOrManager, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     // Check if product has stock in any shop
-    const Stock = require('../models/Stock');
+    const Stock = require("../models/Stock");
     const stockEntries = await Stock.find({ product: req.params.id });
 
     if (stockEntries.length > 0) {
       return res.status(400).json({
-        message: 'Cannot delete product. It has stock entries in shops. Please set status to inactive instead.'
+        message:
+          "Cannot delete product. It has stock entries in shops. Please set status to inactive instead.",
       });
     }
 
     await product.deleteOne();
 
-    res.json({ message: 'Product deleted successfully' });
+    res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
