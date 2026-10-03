@@ -1,12 +1,12 @@
 import { Box, Divider, MenuItem, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useDispatch } from "react-redux";
 import DynamicDrawer from "../../UI/dynamicDrawer/DynamicDrawer";
-import { useCreateProduct } from "../../hooks/useProducts";
+import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
 import { addNotification } from "../../store/slices/uiSlice";
 
-const CreateProductDrawer = ({ open, handleClose }) => {
+const CreateProductDrawer = ({ open, handleClose, rowData, isEditMood }) => {
   const [productForm, setProductForm] = useState({
     name: "",
     category: "",
@@ -23,7 +23,7 @@ const CreateProductDrawer = ({ open, handleClose }) => {
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
   const createProductMutation = useCreateProduct();
-
+  const updateProductMutation = useUpdateProduct();
   const units = [
     { value: "pcs", label: "Pieces" },
     { value: "kg", label: "Kilogram" },
@@ -39,6 +39,37 @@ const CreateProductDrawer = ({ open, handleClose }) => {
     { value: "inactive", label: "Inactive" },
     { value: "discontinued", label: "Discontinued" },
   ];
+
+  useEffect(() => {
+    if (isEditMood && rowData) {
+      setProductForm({
+        _id: rowData._id,
+        name: rowData.name || "",
+        category: rowData.category || "",
+        brand: rowData.brand || "",
+        sku: rowData.sku || "",
+        description: rowData.description || "",
+        minStockLevel: rowData.minStockLevel ?? "",
+        price: rowData.price ?? "",
+        costPrice: rowData.costPrice ?? "",
+        unit: rowData.unit || "pcs",
+        status: rowData.status || "active",
+      });
+    } else {
+      setProductForm({
+        name: "",
+        category: "",
+        brand: "",
+        sku: "",
+        description: "",
+        minStockLevel: "",
+        price: "",
+        costPrice: "",
+        unit: "pcs",
+        status: "active",
+      });
+    }
+  }, [isEditMood, rowData, open]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -85,14 +116,28 @@ const CreateProductDrawer = ({ open, handleClose }) => {
     // API call yaha add karenge
 
     try {
-      await createProductMutation.mutateAsync(productForm);
-      dispatch(
-        addNotification({
-          message: "Product created successfully",
-          type: "success",
-        }),
-      );
-      handleClose();
+      if (isEditMood) {
+        await updateProductMutation.mutateAsync({
+          id: productForm._id,
+          data: productForm,
+        });
+        dispatch(
+          addNotification({
+            message: "Product updated successfully",
+            type: "success",
+          }),
+        );
+        handleClose();
+      } else {
+        await createProductMutation.mutateAsync(productForm);
+        dispatch(
+          addNotification({
+            message: "Product created successfully",
+            type: "success",
+          }),
+        );
+        handleClose();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -104,7 +149,7 @@ const CreateProductDrawer = ({ open, handleClose }) => {
       handleClose={handleClose}
       heading='Create New Product'
       hasSecondaryHeader='Add your product information to get started.'
-      buttonText='Create'
+      buttonText={isEditMood ? "Update" : "Create"}
       submitClick={handleSubmit}
       customWidth='60vw'>
       <Box

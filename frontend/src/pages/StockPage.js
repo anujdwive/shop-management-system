@@ -30,11 +30,17 @@ import { useSearchParams } from "react-router-dom";
 
 import StatCard from "../UI/statCard/StatCard";
 import CreateProductDrawer from "./products/CreateProductDrawer";
-import { useProducts } from "../hooks/useProducts";
+import { useDeleteProduct, useProducts } from "../hooks/useProducts";
+import { useDispatch } from "react-redux";
+import { addNotification } from "../store/slices/uiSlice";
 
 const StockPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const [openProduct, setOpenProduct] = useState(false);
+  const [rowData, setRowData] = useState(null);
+  const [isEditMood, setIsEditMood] = useState(false);
+  const dispatch = useDispatch();
+  const deleteProductMutation = useDeleteProduct();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(
     searchParams.get("search") || "",
@@ -81,10 +87,23 @@ const StockPage = () => {
 
   const handleEditProduct = (product) => {
     console.log("Edit product:", product);
+    setRowData(product);
+    setIsEditMood(true);
+    handleProductDrawer();
   };
 
-  const handleDeleteProduct = (product) => {
-    console.log("Delete product:", product);
+  const handleDeleteProduct = async (product) => {
+    try {
+      await deleteProductMutation.mutateAsync(product._id);
+      dispatch(
+        addNotification({
+          message: "Product updated successfully",
+          type: "success",
+        }),
+      );
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const columns = [
@@ -456,6 +475,8 @@ const StockPage = () => {
       <CreateProductDrawer
         open={openProduct}
         handleClose={handleProductDrawer}
+        rowData={rowData}
+        isEditMood={isEditMood}
       />
     </>
   );
