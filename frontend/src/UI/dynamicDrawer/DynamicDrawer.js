@@ -90,7 +90,7 @@ const DynamicDrawer = ({
         sx={{
           px: 2,
           height: contentHeight,
-          // overflow: "scroll",
+          overflow: "scroll",
           minWidth: "40vw",
           ...sx,
         }}>
