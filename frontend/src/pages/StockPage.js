@@ -1,5 +1,7 @@
 import {
   Add,
+  Delete,
+  Edit,
   Inventory,
   SwapCalls,
   TrendingDown,
@@ -13,15 +15,17 @@ import {
   Button,
   Chip,
   Container,
+  IconButton,
   Paper,
   Tab,
   Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 
 import { DataGrid } from "@mui/x-data-grid";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import StatCard from "../UI/statCard/StatCard";
@@ -31,21 +35,21 @@ import { useProducts } from "../hooks/useProducts";
 const StockPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const [openProduct, setOpenProduct] = useState(false);
-
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const [searchInput, setSearchInput] = useState(
+    searchParams.get("search") || "",
+  );
   const limit = Number(searchParams.get("limit")) || 10;
   const page = Number(searchParams.get("page")) || 1;
 
   const { data } = useProducts({
+    search: searchInput,
     page,
     limit,
   });
 
   const products = data?.products || [];
   const pagination = data?.pagination;
-
-  console.log(products);
 
   const handleProductDrawer = () => {
     setOpenProduct((prev) => !prev);
@@ -58,6 +62,29 @@ const StockPage = () => {
 
       return prev;
     });
+  };
+
+  useEffect(() => {
+    let timer = setTimeout(() => {
+      setSearchParams((prev) => {
+        if (searchInput) {
+          prev.set("search", searchInput);
+        } else {
+          prev.delete("search");
+        }
+
+        return prev;
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const handleEditProduct = (product) => {
+    console.log("Edit product:", product);
+  };
+
+  const handleDeleteProduct = (product) => {
+    console.log("Delete product:", product);
   };
 
   const columns = [
@@ -128,6 +155,30 @@ const StockPage = () => {
         />
       ),
     },
+    {
+      field: "actions",
+      headerName: "Actions",
+      sortable: false,
+      filterable: false,
+      width: 140,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton
+            size='small'
+            color='primary'
+            onClick={() => handleEditProduct(params.row)}>
+            <Edit fontSize='small' />
+          </IconButton>
+
+          <IconButton
+            size='small'
+            color='error'
+            onClick={() => handleDeleteProduct(params.row)}>
+            <Delete fontSize='small' />
+          </IconButton>
+        </Box>
+      ),
+    },
   ];
 
   const quickStats = [
@@ -167,34 +218,19 @@ const StockPage = () => {
         sx={{
           width: "100%",
           maxWidth: "1440px",
-
           mx: "auto",
-
           px: {
             xs: 2,
             sm: 3,
             md: 4,
           },
-
           py: 4,
-
           boxSizing: "border-box",
         }}>
-        {/* ============================= */}
         {/* PAGE HEADER */}
-        {/* ============================= */}
 
-        <Box
-          sx={{
-            width: "100%",
-            mb: 3,
-          }}>
-          <Typography
-            variant='h4'
-            fontWeight={700}
-            sx={{
-              mb: 0.5,
-            }}>
+        <Box sx={{ width: "100%", mb: 3 }}>
+          <Typography variant='h4' fontWeight={700} sx={{ mb: 0.5 }}>
             Stock Management
           </Typography>
 
@@ -203,54 +239,15 @@ const StockPage = () => {
           </Typography>
         </Box>
 
-        {/* ============================= */}
-        {/* QUICK STATS */}
-        {/* ============================= */}
-
-        <Box
-          sx={{
-            display: "grid",
-
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, minmax(0, 1fr))",
-              md: "repeat(4, minmax(0, 1fr))",
-            },
-
-            gap: 3,
-
-            width: "100%",
-
-            mt: 3,
-          }}>
-          {quickStats.map((stat) => (
-            <Box
-              key={stat.title}
-              sx={{
-                width: "100%",
-                minWidth: 0,
-              }}>
-              <StatCard {...stat} />
-            </Box>
-          ))}
-        </Box>
-
-        {/* ============================= */}
         {/* TABS */}
-        {/* ============================= */}
 
         <Paper
           elevation={0}
           sx={{
             width: "100%",
-
-            mt: 3,
-
             borderRadius: 3,
-
             border: "1px solid",
             borderColor: "grey.100",
-
             overflow: "hidden",
           }}>
           <Tabs
@@ -265,54 +262,76 @@ const StockPage = () => {
           </Tabs>
         </Paper>
 
-        {/* ============================= */}
         {/* OVERVIEW */}
-        {/* ============================= */}
 
         {tabValue === 0 && (
-          <Paper
-            elevation={0}
-            sx={{
-              width: "100%",
+          <>
+            {/* STAT CARDS */}
 
-              mt: 3,
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, minmax(0, 1fr))",
+                  md: "repeat(4, minmax(0, 1fr))",
+                },
+                gap: 3,
+                width: "100%",
+                mt: 3,
+              }}>
+              {quickStats.map((stat) => (
+                <Box
+                  key={stat.title}
+                  sx={{
+                    width: "100%",
+                    minWidth: 0,
+                  }}>
+                  <StatCard {...stat} />
+                </Box>
+              ))}
+            </Box>
 
-              p: 3,
+            {/* OVERVIEW CONTENT */}
 
-              borderRadius: 3,
+            <Paper
+              elevation={0}
+              sx={{
+                width: "100%",
+                mt: 3,
+                p: 3,
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "grey.100",
+              }}>
+              <Typography variant='h6' fontWeight={700}>
+                Inventory Overview
+              </Typography>
 
-              border: "1px solid",
-              borderColor: "grey.100",
-            }}>
-            <Typography variant='h6' fontWeight={700} sx={{ mb: 1 }}>
-              Inventory Overview
-            </Typography>
-
-            <Typography variant='body2' color='text.secondary'>
-              Use the tabs above to manage products, stock transfers, and low
-              stock alerts.
-            </Typography>
-          </Paper>
+              <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+                View your inventory summary and stock information here.
+              </Typography>
+            </Paper>
+          </>
         )}
 
-        {/* ============================= */}
         {/* PRODUCTS */}
-        {/* ============================= */}
 
         {tabValue === 1 && (
-          <Box
-            sx={{
-              width: "100%",
-              minWidth: 0,
-              mt: 3,
-            }}>
-            {/* Add Product */}
+          <Box sx={{ width: "100%", mt: 3 }}>
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "flex-end",
                 mb: 2,
+                gap: 1,
               }}>
+              <TextField
+                size='small'
+                placeholder='Search product'
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
               <Button
                 variant='contained'
                 startIcon={<Add />}
@@ -321,23 +340,16 @@ const StockPage = () => {
               </Button>
             </Box>
 
-            {/* Products Table */}
             <Paper
               elevation={0}
               sx={{
                 width: "100%",
-                minWidth: 0,
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "grey.100",
                 overflow: "hidden",
               }}>
-              <Box
-                sx={{
-                  width: "100%",
-                  minWidth: 0,
-                  height: 520,
-                }}>
+              <Box sx={{ width: "100%", height: 500 }}>
                 <DataGrid
                   rows={products}
                   columns={columns}
@@ -353,8 +365,13 @@ const StockPage = () => {
                   pageSizeOptions={[10, 25, 50]}
                   disableRowSelectionOnClick
                   sx={{
-                    width: "100%",
                     border: 0,
+                  }}
+                  initialState={{
+                    pinnedColumns: {
+                      left: ["name", "sku"],
+                      right: ["actions"],
+                    },
                   }}
                 />
               </Box>
@@ -362,24 +379,17 @@ const StockPage = () => {
           </Box>
         )}
 
-        {/* ============================= */}
         {/* STOCK TRANSFER */}
-        {/* ============================= */}
 
         {tabValue === 2 && (
           <Paper
             elevation={0}
             sx={{
               width: "100%",
-
               mt: 3,
-
               p: 4,
-
               textAlign: "center",
-
               borderRadius: 3,
-
               border: "1px solid",
               borderColor: "grey.100",
             }}>
@@ -405,35 +415,25 @@ const StockPage = () => {
           </Paper>
         )}
 
-        {/* ============================= */}
         {/* LOW STOCK */}
-        {/* ============================= */}
 
         {tabValue === 3 && (
-          <Box
-            sx={{
-              width: "100%",
-              mt: 3,
-            }}>
+          <Box sx={{ width: "100%", mt: 3 }}>
             <Alert
               severity='warning'
-              icon={<Warning />}
               sx={{
                 borderRadius: 3,
                 mb: 3,
               }}>
-              0 items need restocking
+              <Warning sx={{ mr: 1 }} />0 items need restocking
             </Alert>
 
             <Paper
               elevation={0}
               sx={{
                 width: "100%",
-
                 p: 3,
-
                 borderRadius: 3,
-
                 border: "1px solid",
                 borderColor: "grey.100",
               }}>
