@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 // Protected Pages
+import StockAndProManagement from "./components/screen/stockAndProductManagement/StockAndProManagement";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 import DashboardPage from "./pages/DashboardPage";
 import EmployeesPage from "./pages/EmployeesPage";
@@ -19,7 +20,6 @@ import FinancePage from "./pages/FinancePage";
 import MeetingsPage from "./pages/MeetingsPage";
 import ReportsPage from "./pages/ReportsPage";
 import ShopsPage from "./pages/ShopsPage";
-import StockPage from "./pages/StockPage";
 
 const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -58,7 +58,7 @@ const App = () => {
         <Route element={<ProtectedLayout />}>
           <Route path='/dashboard' element={<DashboardPage />} />
           <Route path='/dashboard/shops' element={<ShopsPage />} />
-          <Route path='/dashboard/stock' element={<StockPage />} />
+          <Route path='/dashboard/stock' element={<StockAndProManagement />} />
           <Route path='/dashboard/finance' element={<FinancePage />} />
           <Route path='/dashboard/employees' element={<EmployeesPage />} />
           <Route path='/dashboard/meetings' element={<MeetingsPage />} />
