@@ -15,6 +15,13 @@ export const useShops = ({ search, limit, page }) => {
   });
 };
 
+export const useShopOptions = () => {
+  return useQuery({
+    queryKey: ["shopOptions"],
+    queryFn: () => shopService.getAllShopOptions().then((res) => res.data),
+  });
+};
+
 export const useShop = (id) => {
   return useQuery({
     queryKey: ["shop", id],

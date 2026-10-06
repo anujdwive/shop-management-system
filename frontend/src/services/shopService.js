@@ -9,6 +9,7 @@ export const shopService = {
         page,
       },
     }),
+  getAllShopOptions: () => api.get("/api/shops/options"),
   getById: (id) => api.get(`/api/shops/${id}`),
   create: (data) => api.post("/api/shops", data),
   update: (id, data) => api.put(`/api/shops/${id}`, data),
