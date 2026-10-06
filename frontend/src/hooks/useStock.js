@@ -1,18 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { stockService } from '../services/stockService';
+import { useQuery } from "@tanstack/react-query";
+import { stockService } from "../services/stockService";
 
 export const useStock = (shopId) => {
   return useQuery({
-    queryKey: ['stock', shopId],
-    queryFn: () => stockService.getByShop(shopId).then((res) => res.data),
-    enabled: !!shopId,
+    queryKey: ["stock", shopId],
+    queryFn: () => stockService.getAll({ shopId }).then((res) => res.data),
   });
 };
 
 export const useLowStockAlerts = (shopId) => {
   return useQuery({
-    queryKey: ['lowStock', shopId],
-    queryFn: () => stockService.getLowStockAlerts(shopId).then((res) => res.data),
+    queryKey: ["lowStock", shopId],
+    queryFn: () =>
+      stockService.getLowStockAlerts(shopId).then((res) => res.data),
     enabled: !!shopId,
   });
 };
