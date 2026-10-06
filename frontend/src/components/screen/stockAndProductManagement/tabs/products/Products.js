@@ -227,11 +227,37 @@ const Products = () => {
               disableRowSelectionOnClick
               sx={{
                 border: 0,
-              }}
-              initialState={{
-                pinnedColumns: {
-                  left: ["name", "sku"],
-                  right: ["actions"],
+                // --- CUSTOM CSS FOR STICKY COLUMNS ---
+                // First Column (Product Name)
+                "& .MuiDataGrid-columnHeader[data-field='name'], & .MuiDataGrid-cell[data-field='name']":
+                  {
+                    position: "sticky",
+                    left: 0,
+                    backgroundColor: "background.paper",
+                    zIndex: 2,
+                    boxShadow: "2px 0px 5px -2px rgba(0,0,0,0.1)",
+                  },
+                // Second Column (SKU) - Offset by the minWidth of the first column (180px)
+                "& .MuiDataGrid-columnHeader[data-field='sku'], & .MuiDataGrid-cell[data-field='sku']":
+                  {
+                    position: "sticky",
+                    left: 180,
+                    backgroundColor: "background.paper",
+                    zIndex: 2,
+                    boxShadow: "2px 0px 5px -2px rgba(0,0,0,0.1)",
+                  },
+                // Last Column (Actions)
+                "& .MuiDataGrid-columnHeader[data-field='actions'], & .MuiDataGrid-cell[data-field='actions']":
+                  {
+                    position: "sticky",
+                    right: 0,
+                    backgroundColor: "background.paper",
+                    zIndex: 2,
+                    boxShadow: "-2px 0px 5px -2px rgba(0,0,0,0.1)",
+                  },
+                // Ensure headers stay on top of the sticky cells during vertical scroll
+                "& .MuiDataGrid-columnHeaders": {
+                  zIndex: 3,
                 },
               }}
             />
