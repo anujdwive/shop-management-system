@@ -84,6 +84,33 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
+router.get("/options", protect, ownerOrManager, async (req, res) => {
+  try {
+    const filter = {};
+
+    // Owner → all shops
+    // Manager → only assigned shops
+    if (req.user.role !== "owner") {
+      filter._id = { $in: req.user.shops };
+    }
+
+    const shops = await Shop.find(filter).select("_id name").lean();
+
+    res.status(200).json({
+      success: true,
+      data: shops,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
 // @route   GET /api/shops/:id
 // @desc    Get single shop
 // @access  Private

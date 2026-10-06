@@ -54,6 +54,26 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
+// Only for id , name and sku
+router.get("/options", protect, ownerOrManager, async (req, res) => {
+  try {
+    const products = await Product.find().select("_id name sku").lean();
+
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
 // @route   GET /api/products/:id
 // @desc    Get single product
 // @access  Private
