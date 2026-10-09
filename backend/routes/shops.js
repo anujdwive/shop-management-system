@@ -44,8 +44,10 @@ router.get("/", protect, async (req, res) => {
     }
 
     // Role based filter
-    if (req.user.role !== "owner") {
-      filter._id = { $in: req.user.shops };
+    if (req.user.role === "owner") {
+      filter.owner = req.user._id;
+    } else {
+      filter._id = { $in: req.user.shops || [] };
     }
 
     // Get shops
@@ -90,8 +92,10 @@ router.get("/options", protect, ownerOrManager, async (req, res) => {
 
     // Owner → all shops
     // Manager → only assigned shops
-    if (req.user.role !== "owner") {
-      filter._id = { $in: req.user.shops };
+    if (req.user.role === "owner") {
+      filter.owner = req.user._id;
+    } else {
+      filter._id = { $in: req.user.shops || [] };
     }
 
     const shops = await Shop.find(filter).select("_id name").lean();
