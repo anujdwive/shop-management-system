@@ -29,6 +29,10 @@ router.get("/", protect, async (req, res) => {
       ];
     }
 
+    if (req.user.role === "owner") {
+      query.owner = req.user._id;
+    }
+
     const [products, total] = await Promise.all([
       Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(pageLimit),
 
@@ -57,7 +61,9 @@ router.get("/", protect, async (req, res) => {
 // Only for id , name and sku
 router.get("/options", protect, ownerOrManager, async (req, res) => {
   try {
-    const products = await Product.find().select("_id name sku").lean();
+    const products = await Product.find({ owner: req.user._id })
+      .select("_id name sku")
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -131,6 +137,7 @@ router.post("/", protect, ownerOrManager, async (req, res) => {
       costPrice,
       unit,
       status,
+      owner: req.user._id,
     });
 
     res.status(201).json(product);
