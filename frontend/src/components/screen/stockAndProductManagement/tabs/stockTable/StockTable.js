@@ -18,7 +18,18 @@ const StockTable = () => {
 
   console.log(data);
 
-  const rows = [];
+  const rows = (data?.stocks || []).map((stock) => ({
+    _id: stock._id,
+    product: stock.product?.name || "N/A",
+    sku: stock.product?.sku || "N/A",
+    shop: stock.shop?.name || "N/A",
+    quantity: stock.quantity,
+    unit: stock.product?.unit || "pcs",
+    status: stock.product?.status || "N/A",
+    lastUpdated: stock.lastUpdated
+      ? new Date(stock.lastUpdated).toLocaleString("en-IN")
+      : "N/A",
+  }));
 
   const columns = [
     {

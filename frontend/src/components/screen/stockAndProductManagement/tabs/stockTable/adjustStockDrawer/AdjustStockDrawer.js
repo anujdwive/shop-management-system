@@ -148,8 +148,6 @@ const AdjustStockDrawer = ({ open, handleClose }) => {
       notes: formData.notes.trim(),
     };
 
-    console.log("Adjust Stock Payload:", payload);
-
     try {
       await adjustStockMutation.mutateAsync(payload);
       dispatch(
@@ -162,8 +160,6 @@ const AdjustStockDrawer = ({ open, handleClose }) => {
     } catch (error) {
       console.log(error);
     }
-
-    handleClose();
   };
 
   const selectedProduct = products?.data.find(
