@@ -14,6 +14,9 @@ import {
 import DynamicDrawer from "../../../../../../UI/dynamicDrawer/DynamicDrawer";
 import { useProductOptions } from "../../../../../../hooks/useProducts";
 import { useShopOptions } from "../../../../../../hooks/useShops";
+import { useAdjustStock } from "../../../../../../hooks/useStock";
+import { useDispatch } from "react-redux";
+import { addNotification } from "../../../../../../store/slices/uiSlice";
 
 const initialFormData = {
   shopId: "",
@@ -26,6 +29,7 @@ const initialFormData = {
 const AdjustStockDrawer = ({ open, handleClose }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
   const { data: products } = useProductOptions();
   const { data: shops } = useShopOptions();
   console.log(products?.data, shops?.data);
@@ -62,6 +66,7 @@ const AdjustStockDrawer = ({ open, handleClose }) => {
   // ];
 
   const [currentStock, setCurrentStock] = useState(0);
+  const adjustStockMutation = useAdjustStock();
 
   useEffect(() => {
     if (!open) {
@@ -132,7 +137,7 @@ const AdjustStockDrawer = ({ open, handleClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     const payload = {
@@ -145,14 +150,18 @@ const AdjustStockDrawer = ({ open, handleClose }) => {
 
     console.log("Adjust Stock Payload:", payload);
 
-    /*
-     * Later:
-     *
-     * await adjustStockMutation.mutateAsync(payload)
-     *
-     * then:
-     * handleClose();
-     */
+    try {
+      await adjustStockMutation.mutateAsync(payload);
+      dispatch(
+        addNotification({
+          message: "Stock adjust successfully",
+          type: "success",
+        }),
+      );
+      handleClose();
+    } catch (error) {
+      console.log(error);
+    }
 
     handleClose();
   };
