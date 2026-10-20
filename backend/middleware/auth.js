@@ -1,57 +1,88 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-// Protect routes - verify JWT token
+// Verify token and identify the current user
 const protect = async (req, res, next) => {
-  let token;
+  const authHeader = req.headers.authorization;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
+  // 1. Validate Authorization header
+  if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
+    return res.status(401).json({
+      message: "Not authorized, token required",
+    });
+  }
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const token = authHeader.split(/\s+/)[1];
 
-      // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
+  // 2. Verify JWT
+  let decoded;
 
-      if (!req.user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    return res.status(401).json({
+      message: "Not authorized, invalid or expired token",
+    });
+  }
 
-      if (req.user.status !== 'active') {
-        return res.status(401).json({ message: 'User account is inactive' });
-      }
+  // 3. Ensure the expected user ID exists
+  if (!decoded || typeof decoded.id !== "string" || !decoded.id) {
+    return res.status(401).json({
+      message: "Not authorized, invalid token payload",
+    });
+  }
 
-      next();
-    } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+  try {
+    // 4. Load fresh user data from database
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Not authorized",
+      });
     }
-  }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    // 5. Reject inactive or pending accounts
+    if (user.status !== "active") {
+      return res.status(403).json({
+        message: "Account is not active",
+      });
+    }
+
+    // 6. Use current database user for authorization
+    req.user = user;
+
+    return next();
+  } catch (error) {
+    // Database/server errors go to Express error handler
+    return next(error);
   }
 };
 
-// Check if user is owner
+// Owner-only role check
 const owner = (req, res, next) => {
-  if (req.user && req.user.role === 'owner') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Not authorized as owner' });
+  if (req.user?.role === "owner") {
+    return next();
   }
+
+  return res.status(403).json({
+    message: "Not authorized as owner",
+  });
 };
 
-// Check if user is owner or manager
+// Owner or manager role check
 const ownerOrManager = (req, res, next) => {
-  if (req.user && (req.user.role === 'owner' || req.user.role === 'manager')) {
-    next();
-  } else {
-    res.status(403).json({ message: 'Not authorized as owner or manager' });
+  if (req.user && ["owner", "manager"].includes(req.user.role)) {
+    return next();
   }
+
+  return res.status(403).json({
+    message: "Not authorized as owner or manager",
+  });
 };
 
-module.exports = { protect, owner, ownerOrManager };
+module.exports = {
+  protect,
+  owner,
+  ownerOrManager,
+};
