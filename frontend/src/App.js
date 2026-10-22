@@ -19,7 +19,7 @@ import FinancePage from "./pages/FinancePage";
 import MeetingsPage from "./pages/MeetingsPage";
 import ReportsPage from "./pages/ReportsPage";
 import ShopsPage from "./pages/ShopsPage";
-import EmployeesPage from "./components/screen/employeeManagement/EmployeesPage";
+import EmployeesManagement from "./components/screen/employeeManagement/EmployeesManagement";
 
 const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -60,7 +60,10 @@ const App = () => {
           <Route path='/dashboard/shops' element={<ShopsPage />} />
           <Route path='/dashboard/stock' element={<StockAndProManagement />} />
           <Route path='/dashboard/finance' element={<FinancePage />} />
-          <Route path='/dashboard/employees' element={<EmployeesPage />} />
+          <Route
+            path='/dashboard/employees'
+            element={<EmployeesManagement />}
+          />
           <Route path='/dashboard/meetings' element={<MeetingsPage />} />
           <Route path='/dashboard/reports' element={<ReportsPage />} />
         </Route>
