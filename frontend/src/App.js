@@ -15,11 +15,11 @@ import RegisterPage from "./pages/RegisterPage";
 import StockAndProManagement from "./components/screen/stockAndProductManagement/StockAndProManagement";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 import DashboardPage from "./pages/DashboardPage";
-import EmployeesPage from "./pages/EmployeesPage";
 import FinancePage from "./pages/FinancePage";
 import MeetingsPage from "./pages/MeetingsPage";
 import ReportsPage from "./pages/ReportsPage";
 import ShopsPage from "./pages/ShopsPage";
+import EmployeesPage from "./components/screen/employeeManagement/EmployeesPage";
 
 const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
